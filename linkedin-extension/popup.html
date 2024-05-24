@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LinkedIn Scraper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 250px;
+      padding: 20px;
+      background-color: #f5f5f5;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #0073b1;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .button:hover {
+      background-color: #005a8c;
+    }
+    .button:active {
+      background-color: #004069;
+    }
+    .stop-button {
+      background-color: #d9534f;
+    }
+    .stop-button:hover {
+      background-color: #c9302c;
+    }
+    .stop-button:active {
+      background-color: #ac2925;
+    }
+  </style>
+</head>
+<body>
+  <h1>LinkedIn Scraper</h1>
+  <button id="scrapeBtn" class="button">Scrape Likes</button>
+  <button id="stopBtn" class="button stop-button">Stop Scraping</button>
+  <script src="popup.js"></script>
+</body>
+</html>
+
