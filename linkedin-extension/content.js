@@ -1,12 +1,17 @@
-let isScraping = true;
+let isScraping = false;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'stopScraping') {
+  if (message.action === 'startScraping') {
+    isScraping = true;
+    scrapeLikes();
+  } else if (message.action === 'stopScraping') {
     isScraping = false;
   }
 });
 
-(async function() {
+async function scrapeLikes() {
+  if (!isScraping) return;
+
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -24,71 +29,58 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     document.body.removeChild(link);
   }
 
-  async function scrapeLikes() {
-    const reactionButtonSelector = "li.social-details-social-counts__reactions button";
-    const reactionButton = document.querySelector(reactionButtonSelector);
+  const reactionButtonSelector = "li.social-details-social-counts__reactions button";
+  const reactionButton = document.querySelector(reactionButtonSelector);
 
-    if (!reactionButton) {
-      alert('Reactions button not found');
-      return;
+  if (!reactionButton) {
+    alert('Reactions button not found');
+    return;
+  }
+
+  reactionButton.scrollIntoView();
+  reactionButton.click();
+  await sleep(2000); // Reduced initial wait time
+
+  let profileUrls = new Set();
+  let previousHeight = 0;
+
+  while (isScraping) {
+    const modal = document.querySelector('div.social-details-reactors-modal__content');
+    if (!modal) {
+      break;
     }
 
-    reactionButton.scrollIntoView();
-    reactionButton.click();
-    await sleep(5000);
-
-    let profileUrls = new Set();
-    let previousHeight = 0;
-
-    while (isScraping) {
-      // Target only the links within the likes modal
-      const modal = document.querySelector('div.social-details-reactors-modal__content');
-      if (!modal) {
-        break;
+    const profileElements = modal.querySelectorAll("a[href*='/in/']");
+    profileElements.forEach(element => {
+      const url = element.href;
+      if (url.startsWith('https://www.linkedin.com/in/')) {
+        profileUrls.add(url);
       }
+    });
 
-      const profileElements = modal.querySelectorAll("a[href*='/in/']");
-      profileElements.forEach(element => {
-        const url = element.href;
-        if (url.startsWith('https://www.linkedin.com/in/')) {
-          profileUrls.add(url);
-        }
-      });
-
-      // Click "Load more" button if it exists
-      const loadMoreButton = modal.querySelector('button.social-details-reactors-modal__show-more-button');
-      if (loadMoreButton) {
-        loadMoreButton.scrollIntoView();
-        loadMoreButton.click();
-        await sleep(2000); // Wait for new profiles to load
-      } else {
-        // Scroll within the modal to load more profiles
-        modal.scrollBy(0, 200);
-        await sleep(1000);
-
-        const newHeight = modal.scrollHeight;
-        if (newHeight === previousHeight) {
-          break;
-        }
-        previousHeight = newHeight;
-      }
-
-      // Check if scraping has been stopped
-      if (!isScraping) {
-        console.log('Scraping stopped by user');
-        break;
-      }
-    }
-
-    if (profileUrls.size > 0) {
-      const profileUrlsArray = Array.from(profileUrls).map(url => [url]);
-      downloadCSV(profileUrlsArray, 'linkedin_likes.csv');
-      alert('Scraping complete! CSV file downloaded.');
+    const loadMoreButton = modal.querySelector('button.artdeco-button--muted');
+    if (loadMoreButton) {
+      loadMoreButton.scrollIntoView();
+      loadMoreButton.click();
+      await sleep(500); // Reduced wait time after clicking the load more button
     } else {
-      alert('No profiles found or scraping stopped.');
+      modal.scrollBy(0, 200);
+      await sleep(500); // Reduced wait time after scrolling
+
+      const newHeight = modal.scrollHeight;
+      if (newHeight === previousHeight) {
+        break;
+      }
+      previousHeight = newHeight;
     }
   }
 
-  scrapeLikes();
-})();
+  if (profileUrls.size > 0) {
+    const profileUrlsArray = Array.from(profileUrls).map(url => [url]);
+    downloadCSV(profileUrlsArray, 'linkedin_likes.csv');
+    alert('Scraping complete! CSV file downloaded.');
+  } else {
+    alert('No profiles found or scraping stopped.');
+  }
+}
 
