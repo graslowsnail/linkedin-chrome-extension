@@ -41,9 +41,9 @@ async function scrapeLikes(post) {
 
   reactionButton.scrollIntoView();
   reactionButton.click();
-  await sleep(2000); // Reduced initial wait time
+  await sleep(2000);
 
-  let profileUrls = new Set();
+  let profileDetails = new Set();
   let previousHeight = 0;
 
   while (isScraping) {
@@ -55,8 +55,9 @@ async function scrapeLikes(post) {
     const profileElements = modal.querySelectorAll("a[href*='/in/']");
     profileElements.forEach(element => {
       const url = element.href;
+      const name = element.querySelector('span[aria-hidden="true"]').innerText;
       if (url.startsWith('https://www.linkedin.com/in/')) {
-        profileUrls.add(url);
+        profileDetails.add(`${name}: ${url}`);
       }
     });
 
@@ -64,11 +65,10 @@ async function scrapeLikes(post) {
     if (loadMoreButton) {
       loadMoreButton.scrollIntoView();
       loadMoreButton.click();
-      await sleep(500); // Reduced wait time after clicking the load more button
+      await sleep(500);
     } else {
       modal.scrollBy(0, 200);
-      await sleep(500); // Reduced wait time after scrolling
-
+      await sleep(500);
       const newHeight = modal.scrollHeight;
       if (newHeight === previousHeight) {
         break;
@@ -77,9 +77,9 @@ async function scrapeLikes(post) {
     }
   }
 
-  if (profileUrls.size > 0) {
-    const profileUrlsArray = Array.from(profileUrls).map(url => [url]);
-    downloadCSV(profileUrlsArray, 'linkedin_likes.csv');
+  if (profileDetails.size > 0) {
+    const profileDetailsArray = Array.from(profileDetails).map(detail => [detail]);
+    downloadCSV(profileDetailsArray, 'linkedin_likes.csv');
     alert('Scraping complete! CSV file downloaded.');
   } else {
     alert('No profiles found or scraping stopped.');
@@ -87,7 +87,7 @@ async function scrapeLikes(post) {
 }
 
 function injectActionButtons() {
-  const postSelectors = "div.feed-shared-update-v2"; // Update this selector based on LinkedIn's current structure
+  const postSelectors = "div.feed-shared-update-v2";
   const posts = document.querySelectorAll(postSelectors);
 
   posts.forEach(post => {
@@ -101,22 +101,22 @@ function injectActionButtons() {
             actionButton.className = 'scrape-action-button';
             actionButton.style.display = 'flex';
             actionButton.style.alignItems = 'center';
-            actionButton.style.padding = '8px 12px'; // Adjust padding to match other menu items
-            actionButton.style.backgroundColor = 'transparent'; // Make background transparent
-            actionButton.style.color = 'inherit'; // Inherit text color
+            actionButton.style.padding = '8px 12px';
+            actionButton.style.backgroundColor = 'transparent';
+            actionButton.style.color = 'inherit';
             actionButton.style.border = 'none';
             actionButton.style.cursor = 'pointer';
             actionButton.style.width = '100%';
-            actionButton.style.textAlign = 'left'; // Align text to the left
-            actionButton.style.fontSize = '14px'; // Match text size
-            actionButton.style.fontWeight = '400'; // Match font weight
+            actionButton.style.textAlign = 'left';
+            actionButton.style.fontSize = '14px';
+            actionButton.style.fontWeight = '400';
 
             const img = document.createElement('img');
             img.src = chrome.runtime.getURL('system_tray_icon.png');
             img.alt = 'Extract Likes Icon';
-            img.style.width = '20px'; // Increase image size
-            img.style.height = '20px'; // Increase image size
-            img.style.marginRight = '12px'; // Adjust margin to match other items
+            img.style.width = '20px';
+            img.style.height = '20px';
+            img.style.marginRight = '12px';
 
             const span = document.createElement('span');
             span.textContent = 'Extract Likes';
@@ -130,7 +130,7 @@ function injectActionButtons() {
               scrapeLikes(post);
             });
 
-            dropdownMenu.prepend(actionButton); // Prepend the action button to the dropdown menu
+            dropdownMenu.prepend(actionButton);
           }
         }, 500); // Adjust the timeout as necessary to wait for the dropdown to render
       });
@@ -138,9 +138,6 @@ function injectActionButtons() {
   });
 }
 
-// Inject buttons on initial load
 injectActionButtons();
-
-// Optionally, you can set an interval to inject buttons periodically if posts are dynamically loaded
 setInterval(injectActionButtons, 5000);
 
