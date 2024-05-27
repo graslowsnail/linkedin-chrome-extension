@@ -41,7 +41,7 @@ async function scrapeLikes(post) {
 
   reactionButton.scrollIntoView();
   reactionButton.click();
-  await sleep(2000);
+  await sleep(2000); // Reduced initial wait time
 
   let profileDetails = new Set();
   let previousHeight = 0;
@@ -69,6 +69,7 @@ async function scrapeLikes(post) {
     } else {
       modal.scrollBy(0, 200);
       await sleep(500);
+
       const newHeight = modal.scrollHeight;
       if (newHeight === previousHeight) {
         break;
@@ -95,14 +96,14 @@ function injectActionButtons() {
     if (threeDotsButton) {
       threeDotsButton.addEventListener('click', () => {
         setTimeout(() => {
-          const dropdownMenu = post.querySelector('div.feed-shared-control-menu__content');
+          const dropdownMenu = post.querySelector('div.artdeco-dropdown__content-inner');
           if (dropdownMenu && !dropdownMenu.querySelector('.scrape-action-button')) {
-            const actionButton = document.createElement('button');
-            actionButton.className = 'scrape-action-button';
+            const actionButton = document.createElement('li');
+            actionButton.className = 'artdeco-dropdown__item artdeco-dropdown__item--is-dropdown ember-view scrape-action-button';
             actionButton.style.display = 'flex';
             actionButton.style.alignItems = 'center';
-            actionButton.style.padding = '8px 12px';
-            actionButton.style.backgroundColor = 'transparent';
+            actionButton.style.padding = '8px 12px'; 
+            actionButton.style.backgroundColor = 'transparent'; 
             actionButton.style.color = 'inherit';
             actionButton.style.border = 'none';
             actionButton.style.cursor = 'pointer';
@@ -116,10 +117,12 @@ function injectActionButtons() {
             img.alt = 'Extract Likes Icon';
             img.style.width = '20px';
             img.style.height = '20px';
-            img.style.marginRight = '12px';
+            img.style.marginRight = '11px';
+            img.style.marginLeft = '6px';
 
-            const span = document.createElement('span');
+            const span = document.createElement('h5');
             span.textContent = 'Extract Likes';
+            span.className = 'feed-shared-control-menu__headline t-14 t-black t-bold'; // Match class names
 
             actionButton.appendChild(img);
             actionButton.appendChild(span);
@@ -132,7 +135,7 @@ function injectActionButtons() {
 
             dropdownMenu.prepend(actionButton);
           }
-        }, 500); // Adjust the timeout as necessary to wait for the dropdown to render
+        }, 500);
       });
     }
   });
