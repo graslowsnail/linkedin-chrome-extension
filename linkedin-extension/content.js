@@ -19,7 +19,8 @@ async function scrapeLikes(post) {
   }
 
   function downloadCSV(data, filename = 'data.csv') {
-    const csvContent = data.map(e => e.join(",")).join("\n");
+    const header = ['first_name', 'last_name', 'profile_url'];
+    const csvContent = [header, ...data].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -41,9 +42,9 @@ async function scrapeLikes(post) {
 
   reactionButton.scrollIntoView();
   reactionButton.click();
-  await sleep(2000); // Reduced initial wait time
+  await sleep(2000);
 
-  let profileDetails = new Set();
+  let profileDetails = [];
   let previousHeight = 0;
 
   while (isScraping) {
@@ -55,9 +56,14 @@ async function scrapeLikes(post) {
     const profileElements = modal.querySelectorAll("a[href*='/in/']");
     profileElements.forEach(element => {
       const url = element.href;
-      const name = element.querySelector('span[aria-hidden="true"]').innerText;
-      if (url.startsWith('https://www.linkedin.com/in/')) {
-        profileDetails.add(`${name}: ${url}`);
+      const nameElement = element.querySelector('span[aria-hidden="true"]');
+      if (nameElement) {
+        const name = nameElement.innerText.trim();
+        const [first_name, ...last_name_parts] = name.split(' ');
+        const last_name = last_name_parts.join(' ');
+        if (url.startsWith('https://www.linkedin.com/in/')) {
+          profileDetails.push([first_name, last_name, url]);
+        }
       }
     });
 
@@ -78,9 +84,8 @@ async function scrapeLikes(post) {
     }
   }
 
-  if (profileDetails.size > 0) {
-    const profileDetailsArray = Array.from(profileDetails).map(detail => [detail]);
-    downloadCSV(profileDetailsArray, 'linkedin_likes.csv');
+  if (profileDetails.length > 0) {
+    downloadCSV(profileDetails, 'linkedin_likes.csv');
     alert('Scraping complete! CSV file downloaded.');
   } else {
     alert('No profiles found or scraping stopped.');
